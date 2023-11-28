@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPM Viewer</title>
+
+    <style>
+        html,body{
+            padding: 0;
+            margin: 0;
+        }
+
+        *{
+            box-sizing: border-box;
+        }
+
+        header{
+            padding: 1rem 5%;
+            background-color: rgba(0, 0, 0, 0.564);
+            box-shadow: 1px 1px 4px white;
+        }
+
+        h1{
+            margin: 0;
+            padding: 0;
+        }
+
+        body{
+            width:100vw;
+            max-width: 100%;
+            min-height: 100vh;
+            background-color:rgb(9, 9, 19);
+            color: white;
+            font-family: "Parmanent Ink",cursive;
+        }
+
+        main{
+            padding: 2rem 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            width:100%;
+            height: 100%;
+            flex-direction: column;
+            gap:1rem;
+        }
+
+        section{
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            gap:1rem;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        #file-input-section{
+            align-items: start;
+        }
+
+        img{
+            width:100%;
+            height: auto;
+        }
+
+        
+        #errorDiv{
+            background-color: rgba(255, 0, 0, 0.462);
+        }
+
+        .hide{
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>PPM Viewer</h1>
+    </header>
+    <main>
+        <section id="file-input-section">
+            <label for="filedata">Choose the file</label>
+            <input type="file" name="filedata" id="filedata" onchange="processFiles(this.files);">
+        </section>
+    
+        <section>
+            <img id="canvas-image-holder" alt="Canvas Image">
+            <div id="filenameDiv"></div>
+        </section>
+        <section>
+            <div id="errorDiv"></div>
+        </section>
+    </main>
+
+
+
+    <script>
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const canvasImageHolder = document.getElementById("canvas-image-holder");
+        const errorDiv = document.getElementById("errorDiv");
+        canvasImageHolder.classList.add("hide");
+
+        function showError(msg) {
+            canvasImageHolder.classList.add("hide");
+            errorDiv.innerHTML = '<div class="error">Error: ' + msg + '</div>';
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+
+        function processPPM(fileContents) {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+             
+                fileContents = fileContents.replace(/^\s+/, '').replace(/\s+$/, '');
+                const data = fileContents.split(/\s+/);
+
+                if (fileContents.substr(0, 2) != 'P3' || data[0] != 'P3') {
+                    showError('File is not a PPM');
+                    return;
+                } 
+
+                const width = data[1];
+                const height = data[2];
+                const maxColors = data[3];
+
+                if (data.length != 3 * width * height + 4) {
+                    showError('Not enough pixel data.<br>'
+                              + 'Found: ' + (data.length  -  4) + '<br>'
+                              + 'Expecting: ' + (3 * width * height) + '<br>'
+                              + 'Based on width = ' + width 
+                              + ' and height = ' + height);
+                    return;
+                }
+
+                errorDiv.innerHTML = '';
+
+                canvas.width=width; 
+                canvas.height=height; 
+
+                const img = context.getImageData(0, 0, width, height);
+                const pixels = img.data;
+
+                let imageIndex = 0;
+                for (let i = 4; i < data.length; i += 3) {
+                    pixels[imageIndex++] = Math.floor(data[i]/maxColors*255); // r
+                    pixels[imageIndex++] = Math.floor(data[i+1]/maxColors*255); // g
+                    pixels[imageIndex++] = Math.floor(data[i+2]/maxColors*255); // b
+                    pixels[imageIndex++] = 255; // a
+                }
+                context.putImageData(img, 0, 0);
+                canvasImageHolder.src = canvas.toDataURL();
+                canvasImageHolder.classList.remove("hide");
+            }
+
+
+        function processFiles(files) {
+
+            const file = files[0];
+            const filenameDiv = document.getElementById("filenameDiv");
+            filenameDiv.innerHTML = "File: " + file.name;
+
+            if (file.name.substr(file.name.length - 4) != ".ppm") {
+                showError('file name does not end with ".ppm"');
+                return
+            }
+
+            const reader = new FileReader();
+            reader.readAsText(file);
+
+            reader.onload = e=>{
+                processPPM(e.target.result);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
