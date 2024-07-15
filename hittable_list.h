@@ -3,6 +3,8 @@
 
 #include "hittable.h"
 
+#include "aabb.h"
+
 #include <memory>
 #include <vector>
 
@@ -37,6 +39,11 @@ class hittable_list : public hittable {
 
         return hit_anything;
     }
+
+    aabb bounding_box() const override {return bbox;}
+
+    private:
+        aabb bbox;
 };
 
 #endif
