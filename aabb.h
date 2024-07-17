@@ -5,14 +5,14 @@
 
 class aabb
 {
-private:
-    /* data */
 public:
     interval x, y, z;
 
     aabb() {} // The default AABB is empty, since intervals are empty by default.
 
-    aabb(const interval &x, const interval &y, const interval &z) : x(x), y(y), z(z) {}
+    aabb(const interval &x, const interval &y, const interval &z) : x(x), y(y), z(z) {
+
+    }
 
     aabb(const point3 &a, const point3 &b)
     {
@@ -85,6 +85,15 @@ public:
             return y.size() > z.size() ? 1 : 2;
     }
     static const aabb empty, universe;
+
+    private:
+        //ensures bbox doesnot has zero volume
+        void pad_to_miniumums(){
+            double delta = 0.0001;
+            if(x.size()<delta) x = x.expand(delta);
+            if(y.size()<delta) y = y.expand(delta);
+            if(z.size()<delta) z = z.expand(delta);
+        }
 };
 
 const aabb aabb::empty = aabb(interval::empty,interval::empty,interval::empty);
